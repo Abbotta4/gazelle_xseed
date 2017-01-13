@@ -2,12 +2,13 @@
 
 import sys
 import requests
+import json
 
-if len( sys.argv ) != 3:
+if len(sys.argv) != 3:
     print "usage: test.py [gazelle username] [gazelle password]"
     sys.exit()
 
-baseurl = 'https:/apollo.rip/'
+baseurl = 'https://apollo.rip/'
 
 GAZELLE_USER = sys.argv[1]
 GAZELLE_PASS = sys.argv[2]
@@ -23,8 +24,9 @@ searchstring = "run the jewels"
 
 with requests.Session() as s:
     s.post(baseurl + 'login.php', data = data)
-    r = s.get(basename + 'ajax.php?action=browse&searchstr=' + searchstring)
-    j = r.json()
+    r = s.get(baseurl + 'ajax.php?action=browse&searchstr=' + searchstring)
+    j = json.loads(r.text)
+    
 
     if j['status'] == 'success':
 	    results = j['response']['results']
