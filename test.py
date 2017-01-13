@@ -5,8 +5,8 @@ import requests
 import json
 
 if len(sys.argv) != 3:
-    print "usage: test.py [gazelle username] [gazelle password]"
-    sys.exit()
+	print "usage: test.py [gazelle username] [gazelle password]"
+	sys.exit()
 
 baseurl = 'https://apollo.rip/'
 
@@ -23,13 +23,13 @@ data = {
 searchstring = "run the jewels"
 
 with requests.Session() as s:
-    s.post(baseurl + 'login.php', data = data)
-    r = s.get(baseurl + 'ajax.php?action=browse&searchstr=' + searchstring)
-    j = json.loads(r.text)
-    
 
-    if j['status'] == 'success':
-	    results = j['response']['results']
-	    print(results)
-    else:
-	    print("apl requests failed")
+	s.post(baseurl + 'login.php', data = data)
+	r = s.get(baseurl + 'ajax.php?action=browse&searchstr=' + searchstring)
+	j = r.json()
+
+	if j['status'] == 'success':
+		results = j['response']['results']
+		print(results)
+	else:
+		print("apl requests failed")
