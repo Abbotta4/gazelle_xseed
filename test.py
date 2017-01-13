@@ -7,11 +7,27 @@ if len( sys.argv ) != 3:
     print "usage: test.py [gazelle username] [gazelle password]"
     sys.exit()
 
+baseurl = 'https:/apollo.rip/'
+
 GAZELLE_USER = sys.argv[1]
 GAZELLE_PASS = sys.argv[2]
+
+data = {
+	'action' : 'login',
+	'username' : GAZELLE_USER,
+	'password' : GAZELLE_PASS
+}
+
+# should search string be argv[3] ?
 searchstring = "run the jewels"
 
 with requests.Session() as s:
-    s.post('https://apollo.rip/login.php', data={'action': 'login', 'username': GAZELLE_USER, 'password': GAZELLE_PASS})
-    r = s.get('https://apollo.rip/ajax.php?action=browse&searchstr=' + searchstring)
-    print r.text
+    s.post(baseurl + 'login.php', data = data)
+    r = s.get(basename + 'ajax.php?action=browse&searchstr=' + searchstring)
+    j = r.json()
+
+    if j['status'] == 'success':
+	    results = j['response']['results']
+	    print(results)
+    else:
+	    print("apl requests failed")
