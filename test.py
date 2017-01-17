@@ -9,16 +9,16 @@ import subprocess
 import glob
 import hashlib
 import logging
-from os import path
 
 BASEURL = 'https://passtheheadphones.me/'
 GAZELLE_USER = sys.argv[1]
 GAZELLE_PASS = sys.argv[2]
 AUTHKEY = sys.argv[3]
 TORRENTPASS = sys.argv[4]
-TORRENTS = glob.glob("*torrent")
 DEL_USER = sys.argv[5]
 DEL_PASS = sys.argv[6]
+
+TORRENTS = glob.glob("*torrent")
 
 logging.basicConfig(filename='gazelle_xseed.log',level=logging.DEBUG)
 
@@ -31,7 +31,7 @@ def download_file(url, name):
     r = requests.get(url, stream=True)
     with open(local_filename, 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
-            if chunk: # filter out keep-alive new chunks
+            if chunk:
                 f.write(chunk)
     return local_filename
 
@@ -39,7 +39,10 @@ def get_infohash(torrent):
 	tf = open(torrent)
 	df = bencode.bdecode(tf.read())
 	info = df['info']
+	tf.close()
+	# infohash is the SHA1 hash of the contents of 'info'
 	return hashlib.sha1(bencode.bencode(info)).hexdigest()
+	
 
 def force_recheck(torrent, username, password):
 	connect_args = 'connect localhost ' + username + ' ' + password + '; '
@@ -78,10 +81,10 @@ login_data = {
 
 with requests.Session() as s:
 
-	s.post(baseurl + 'login.php', data = login_data)
+	s.post(BASEURL + 'login.php', data = login_data)
 
 	test_login = s.post(BASEURL + 'ajax.php')
-	if response.text == '{"status":"failure","response":[]}':
+	if test_login.text == '{"status":"failure","response":[]}':
 		logging.info('Authenticated successfully with gazelle')
 
 		for n in TORRENTS:
@@ -92,10 +95,11 @@ with requests.Session() as s:
 			torrentsize = 0
 			filelist = dectorrent['info']['files']
 			for t in range(0, len(filelist)):
-		        	torrentsize += files[t]['length']
+		        	torrentsize += filelist[t]['length']
 
 			searchstring = ' '.join(x['path'][0] for x in dectorrent['info']['files'])
 
+			time.sleep(5) # privisional wait
 			r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
 			j = r.json()
 
@@ -123,7 +127,7 @@ with requests.Session() as s:
 							print ('Found a potential match for ' + dectorrent['info']['name'] + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
 							logging.info('Found a potential match for ' + dectorrent['info']['name'] + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
 							download_file(BASEURL + downloadstring, downloaded_torrent_name)
-							if force_recheck(downloaded_torrent_name, DEL_USER, DEL_PASS)):
+							if force_recheck(downloaded_torrent_name, DEL_USER, DEL_PASS):
 								print('Successfully found ' + dectorrent['info']['name'])
 								logging.info('Successfully found ' + dectorrent['info']['name'])
 								found = True
@@ -139,6 +143,8 @@ with requests.Session() as s:
 				print('Requests failed.')
 				logging.critical('Requests failed. Most likely an error with the site.')
 				sys.exit()
+
+			torrent_file.close()
 
 	else:
 		print ('Could not authenticate. (Wrong gazelle password?)')
