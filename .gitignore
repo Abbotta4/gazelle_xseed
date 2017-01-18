@@ -2,3 +2,4 @@ references
 run
 *.torrent
 *.bak
+*.log

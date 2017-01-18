@@ -45,9 +45,10 @@ def get_infohash(torrent):
 	
 
 def force_recheck(torrent, username, password):
+	infohash = get_infohash(torrent)
 	connect_args = 'connect localhost ' + username + ' ' + password + '; '
 	subprocess.call(['deluge-console', connect_args + 'add ' + torrent])
-	subprocess.call(['deluge-console', connect_args + 'recheck ' + get_infohash(torrent)])
+	subprocess.call(['deluge-console', connect_args + 'recheck ' + infohash])
 
 	done = False
 	while not done:
@@ -97,18 +98,30 @@ with requests.Session() as s:
 			for t in range(0, len(filelist)):
 		        	torrentsize += filelist[t]['length']
 
-			searchstring = ' '.join(x['path'][0] for x in dectorrent['info']['files'])
+			searchstring = filelist[0]['path'][len(filelist[0]['path']) - 1]
 
-			time.sleep(5) # privisional wait
+			time.sleep(5)
 			r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
 			j = r.json()
 
 			if j['status'] == 'success':
 				results = j['response']['results']
-				if results:
+				while not results
+					for t in range(1, len(filelist)):
+						time.sleep(5)
+						searchstring = filelist[t]['path'][len(filelist[t]['path']) - 1]
+						r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
+						j = r.json()
+						results = j['response']['results']
+					if not results:
+						print('No results for ' + dectorrent['info']['name'])
+						logging.info('No results for ' + dectorrent['info']['name'])
+						break
+
+				else:
 					found = False
 					iter = 0
-					while found == False and iter < len(results):
+					while not found and iter < len(results):
 						possible_find = False
 						if 'size' in results[iter]:
 							if results[iter]['size'] == torrentsize:
@@ -123,7 +136,7 @@ with requests.Session() as s:
 
 						if possible_find:
 							downloadstring = 'torrents.php?action=download&id=' + str(torrentid) + '&authkey=' + AUTHKEY + '&torrent_pass=' + TORRENTPASS
-							downloaded_torrent_name = 'torrent' + str(TORRENTS[n].zfill(5)) + '.torrent'
+							downloaded_torrent_name = 'xseed-' + n
 							print ('Found a potential match for ' + dectorrent['info']['name'] + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
 							logging.info('Found a potential match for ' + dectorrent['info']['name'] + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
 							download_file(BASEURL + downloadstring, downloaded_torrent_name)
@@ -131,13 +144,13 @@ with requests.Session() as s:
 								print('Successfully found ' + dectorrent['info']['name'])
 								logging.info('Successfully found ' + dectorrent['info']['name'])
 								found = True
+						else:
+							iter += 1
 
 					if not found:
 						print('Could not find ' + dectorrent['info']['name'])
 						logging.info('Could not find ' + dectorrent['info']['name'])
-				else:
-					print('No results for ' + dectorrent['info']['name'])
-					logging.info('No results for ' + dectorrent['info']['name'])
+
 
 			else:
 				print('Requests failed.')
