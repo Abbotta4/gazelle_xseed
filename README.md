@@ -1,6 +1,6 @@
-# APL Request Finder
+# gazelle_xseed: A cross-seeding helper script
 
-Script to find requests from APL and find them online (specific location?)  
+gazelle_xseed will load `.torrent` files in the local directory, search a gazelle-based tracker for the torrents, add, and force-recheck them in your torrent client. Currently only supports deluge
 
 Python modules found in `requirements.txt`. Safest to use a virtual environment:  
 ```
