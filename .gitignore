@@ -4,3 +4,4 @@ run
 *.bak
 *.log
 state
+log_file
