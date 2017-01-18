@@ -20,20 +20,28 @@ DEL_PASS = sys.argv[6]
 
 TORRENTS = glob.glob("*torrent")
 
-logging.basicConfig(filename='gazelle_xseed.log',level=logging.DEBUG)
+logging.basicConfig(filename='log_file',level=logging.DEBUG)
 
 if len(sys.argv) != 7:
 	print "usage: test.py [gazelle username] [gazelle password] [authkey] [torrent_pass] [deluge username] [deluge password]"
 	sys.exit()
 
+def pretty_sleep(sleep_time):
+	sys.stdout.write('Sleeping for ' + str(sleep_time) + 's'),
+	for t in range(0, sleep_time):
+		sys.stdout.write('.'),
+		sys.stdout.flush()
+		time.sleep(1)
+	print('')
+
 def download_file(url, name):
-    local_filename = name
-    r = requests.get(url, stream=True)
-    with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
-    return local_filename
+	local_filename = name
+	r = requests.get(url, stream=True)
+	with open(local_filename, 'wb') as f:
+		for chunk in r.iter_content(chunk_size=1024):
+			if chunk:
+				f.write(chunk)
+	return local_filename
 
 def get_infohash(torrent):
 	tf = open(torrent)
@@ -49,7 +57,7 @@ def force_recheck(torrent, username, password):
 	connect_args = 'connect localhost ' + username + ' ' + password + '; '
 	subprocess.call(['deluge-console', connect_args + 'add ' + torrent])
 	subprocess.call(['deluge-console', connect_args + 'recheck ' + infohash])
-
+	'''
 	done = False
 	while not done:
 	        done = True
@@ -73,6 +81,8 @@ def force_recheck(torrent, username, password):
 	        return True
 	else:
 	        return False
+	'''
+	return True
 
 login_data = {
 	'action' : 'login',
@@ -100,15 +110,21 @@ with requests.Session() as s:
 
 			searchstring = filelist[0]['path'][len(filelist[0]['path']) - 1]
 
-			time.sleep(5)
+			print('Checking file 1 in ' + dectorrent['info']['name'])
+			pretty_sleep(5)
 			r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
 			j = r.json()
 
 			if j['status'] == 'success':
 				results = j['response']['results']
-				while not results
-					for t in range(1, len(filelist)):
-						time.sleep(5)
+				# Only want to check the first 3 files
+				check_num = 2
+				if len(filelist) < 2:
+					check_num = len(filelist)
+				while not results:
+					for t in range(1, check_num):
+						print('Checking file ' + str(t+1) + 'in ' + dectorrent['info']['name'])
+						pretty_sleep(5)
 						searchstring = filelist[t]['path'][len(filelist[t]['path']) - 1]
 						r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
 						j = r.json()
@@ -144,12 +160,15 @@ with requests.Session() as s:
 								print('Successfully found ' + dectorrent['info']['name'])
 								logging.info('Successfully found ' + dectorrent['info']['name'])
 								found = True
+								subprocess.call(['mv', n, 'done/'])
+								subprocess.call(['mv', downloaded_torrent_name, 'done/'])
 						else:
 							iter += 1
 
 					if not found:
 						print('Could not find ' + dectorrent['info']['name'])
 						logging.info('Could not find ' + dectorrent['info']['name'])
+						subprocess.call(['mv', n, 'not_found/'])
 
 
 			else:
@@ -157,6 +176,7 @@ with requests.Session() as s:
 				logging.critical('Requests failed. Most likely an error with the site.')
 				sys.exit()
 
+			print('closing file')
 			torrent_file.close()
 
 	else:

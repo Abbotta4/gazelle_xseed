@@ -3,3 +3,6 @@ run
 *.torrent
 *.bak
 *.log
+done/*
+not_found/*
+state
