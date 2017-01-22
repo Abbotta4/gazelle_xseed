@@ -123,7 +123,7 @@ with requests.Session() as s:
 					check_num = len(filelist)
 				while not results:
 					for t in range(1, check_num):
-						print('Checking file ' + str(t+1) + 'in ' + dectorrent['info']['name'])
+						print('Checking file ' + str(t+1) + ' in ' + dectorrent['info']['name'])
 						pretty_sleep(5)
 						searchstring = filelist[t]['path'][len(filelist[t]['path']) - 1]
 						r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
@@ -132,6 +132,7 @@ with requests.Session() as s:
 					if not results:
 						print('No results for ' + dectorrent['info']['name'])
 						logging.info('No results for ' + dectorrent['info']['name'])
+						subprocess.call(['mv', n, 'not_found/'])
 						break
 
 				else:
