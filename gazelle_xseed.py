@@ -8,6 +8,7 @@ import bencode
 import subprocess
 import glob
 import hashlib
+import re
 import logging
 
 BASEURL = 'https://passtheheadphones.me/'
@@ -164,6 +165,7 @@ def searchByFiles(dectorrent):
 
 def searchByName(dectorrent):
 	searchstring = re.sub(r'\W+', ' ', dectorrent['info']['name'])
+	print dectorrent['info']['name']
 	print searchstring
 '''
 	print('Checking for just ' + dectorrent['info']['name'])
@@ -193,7 +195,7 @@ with requests.Session() as s:
 			torrent_file = open(n)
 			dectorrent = bencode.bdecode(torrent_file.read())
 
-			if True #not searchByFiles(dectorrent):
+			if True: #not searchByFiles(dectorrent):
 				searchByName(dectorrent)
 
 			print('closing file')
