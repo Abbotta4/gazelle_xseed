@@ -164,17 +164,72 @@ def searchByFiles(dectorrent):
 		sys.exit()
 
 def searchByName(dectorrent):
-	searchstring = re.sub(r'\W+', ' ', dectorrent['info']['name'])
-	print dectorrent['info']['name']
-	print searchstring
-'''
-	print('Checking for just ' + dectorrent['info']['name'])
+	torrentsize = 0
+        filelist = dectorrent['info']['files']
+        for t in range(0, len(filelist)):
+                torrentsize += filelist[t]['length']
+
+	searchstring = re.sub(r'\[.*?\]', '', dectorrent['info']['name'])
+	searchstring = re.sub(r'\(.*?\)', '', searchstring)
+	searchstring = re.sub(r'\{.*?\}', '', searchstring)
+	searchstring = re.sub(r'\W+', ' ', searchstring)
+	print('Checking for just ' + searchstring)
 	pretty_sleep(5)
 	r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
 	j = r.json()
 
 	if j['status'] == 'success':
-'''
+		results = j['response']['results']
+		if not results:
+			print('No results for ' + searchstring)
+			logging.info('No results for ' + dectorrent['info']['name'])
+			subprocess.call(['mv', n, 'not_found/'])
+		else:
+			found = False
+                        iter = 0
+                        while not found and iter < len(results):
+                                possible_find = False
+                                if 'size' in results[iter]:
+                                        if results[iter]['size'] == torrentsize:
+                                                possible_find = True
+                                                torrentid = results[iter]['torrentId']
+                                else:
+                                        for t in range(0, len(results[iter]['torrents'])):
+                                                if results[iter]['torrents'][t]['size'] == torrentsize:
+                                                        possible_find = True
+                                                        torrentid = results[iter]['torrents'][t]['torrentId']
+                                                        break
+
+                                if possible_find:
+                                        downloadstring = 'torrents.php?action=download&id=' + str(torrentid) + '&authkey=' + AUTHKEY + '&torrent_pass=' + TORRENTPASS
+                                        downloaded_torrent_name = 'xseed-' + n
+                                        print ('Found a potential match for ' + searchstring + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
+                                        logging.info('Found a potential match for ' + searchstring + ' at ' + BASEURL + 'torrents.php?torrentid=' + str(torrentid))
+                                        download_file(BASEURL + downloadstring, downloaded_torrent_name)
+                                        if force_recheck(downloaded_torrent_name, DEL_USER, DEL_PASS):
+                                                print('Successfully found ' + dectorrent['info']['name'])
+                                                logging.info('Successfully found ' + dectorrent['info']['name'])
+                                                found = True
+						subprocess.call(['mv', n, 'done/'])
+                                                subprocess.call(['mv', downloaded_torrent_name, 'done/'])
+				else:
+					iter += 1
+
+			if not found:
+                                print('Could not find ' + dectorrent['info']['name'])
+                                logging.info('Could not find ' + dectorrent['info']['name'])
+				subprocess.call(['mv', n, 'not_found/'])
+				return False
+                        else:
+                                return True
+
+
+        else:
+                print('Requests failed.')
+                logging.critical('Requests failed. Most likely an error with the site.')
+                sys.exit()
+
+
 
 login_data = {
 	'action' : 'login',
@@ -195,7 +250,7 @@ with requests.Session() as s:
 			torrent_file = open(n)
 			dectorrent = bencode.bdecode(torrent_file.read())
 
-			if True: #not searchByFiles(dectorrent):
+			if not searchByFiles(dectorrent):
 				searchByName(dectorrent)
 
 			print('closing file')
