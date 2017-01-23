@@ -169,18 +169,22 @@ def searchByName(dectorrent):
         for t in range(0, len(filelist)):
                 torrentsize += filelist[t]['length']
 
+	print torrentsize
+
 	searchstring = re.sub(r'\[.*?\]', '', dectorrent['info']['name'])
 	searchstring = re.sub(r'\(.*?\)', '', searchstring)
 	searchstring = re.sub(r'\{.*?\}', '', searchstring)
 	searchstring = re.sub(r'\W+', ' ', searchstring)
 	searchstring = re.sub(r'_', ' ', searchstring)
+	searchstring = re.sub(r'[12][90]\d{2}', '', searchstring)
 	print('Checking for just ' + searchstring)
 	pretty_sleep(5)
-	r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
+	r = s.get(BASEURL + 'ajax.php?action=browse&searchstr=' + searchstring)
 	j = r.json()
 
 	if j['status'] == 'success':
 		results = j['response']['results']
+		print results
 		if not results:
 			print('No results for ' + searchstring)
 			logging.info('No results for ' + dectorrent['info']['name'])
@@ -188,6 +192,7 @@ def searchByName(dectorrent):
 		else:
 			found = False
                         iter = 0
+			print 'result length is ' + str(len(results))
                         while not found and iter < len(results):
                                 possible_find = False
                                 if 'size' in results[iter]:
@@ -195,8 +200,12 @@ def searchByName(dectorrent):
                                                 possible_find = True
                                                 torrentid = results[iter]['torrentId']
                                 else:
+					print 'gonna loop ' + str(len(results[iter]['torrents'])) + ' times'
                                         for t in range(0, len(results[iter]['torrents'])):
+						print results[iter]['torrents'][t]['size']
+						print results[iter]['torrents'][t]['size']/torrentsize
                                                 if results[iter]['torrents'][t]['size'] == torrentsize:
+							print 'entered this part'
                                                         possible_find = True
                                                         torrentid = results[iter]['torrents'][t]['torrentId']
                                                         break
