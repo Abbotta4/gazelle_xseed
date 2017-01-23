@@ -173,6 +173,7 @@ def searchByName(dectorrent):
 	searchstring = re.sub(r'\(.*?\)', '', searchstring)
 	searchstring = re.sub(r'\{.*?\}', '', searchstring)
 	searchstring = re.sub(r'\W+', ' ', searchstring)
+	searchstring = re.sub(r'_', ' ', searchstring)
 	print('Checking for just ' + searchstring)
 	pretty_sleep(5)
 	r = s.get(BASEURL + 'ajax.php?action=browse&filelist=' + searchstring)
