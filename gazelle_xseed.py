@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import division
 import sys
 import requests
 import json
@@ -125,11 +126,13 @@ def searchByFiles(dectorrent):
 				possible_find = False
 				if 'size' in results[iter]:
 					if results[iter]['size'] == torrentsize:
+					#if 0.995 < torrentsize/results[iter]['size'] < 1.005:
 						possible_find = True
 						torrentid = results[iter]['torrentId']
 				else:
 					for t in range(0, len(results[iter]['torrents'])):
 						if results[iter]['torrents'][t]['size'] == torrentsize:
+						#if 0.995 < torrentsize/results[iter]['torrents'][t]['size'] < 1.005:
 							possible_find = True
 							torrentid = results[iter]['torrents'][t]['torrentId']
 							break
@@ -177,6 +180,10 @@ def searchByName(dectorrent):
 	searchstring = re.sub(r'\W+', ' ', searchstring)
 	searchstring = re.sub(r'_', ' ', searchstring)
 	searchstring = re.sub(r'[12][90]\d{2}', '', searchstring)
+	searchstring = re.sub (r'[vV][02]', '', searchstring)
+	searchstring = re.sub (r'320', '', searchstring)
+	searchstring = re.sub (r'[Ff][Ll][Aa][Cc]', '', searchstring)
+
 	print('Checking for just ' + searchstring)
 	pretty_sleep(5)
 	r = s.get(BASEURL + 'ajax.php?action=browse&searchstr=' + searchstring)
@@ -184,7 +191,6 @@ def searchByName(dectorrent):
 
 	if j['status'] == 'success':
 		results = j['response']['results']
-		print results
 		if not results:
 			print('No results for ' + searchstring)
 			logging.info('No results for ' + dectorrent['info']['name'])
@@ -192,20 +198,16 @@ def searchByName(dectorrent):
 		else:
 			found = False
                         iter = 0
-			print 'result length is ' + str(len(results))
                         while not found and iter < len(results):
                                 possible_find = False
                                 if 'size' in results[iter]:
-                                        if results[iter]['size'] == torrentsize:
+                                        if 0.995 < torrentsize/results[iter]['size'] < 1.005:
                                                 possible_find = True
                                                 torrentid = results[iter]['torrentId']
                                 else:
-					print 'gonna loop ' + str(len(results[iter]['torrents'])) + ' times'
                                         for t in range(0, len(results[iter]['torrents'])):
-						print results[iter]['torrents'][t]['size']
-						print results[iter]['torrents'][t]['size']/torrentsize
-                                                if results[iter]['torrents'][t]['size'] == torrentsize:
-							print 'entered this part'
+						print torrentsize/results[iter]['torrents'][t]['size']
+                                                if 0.995 < torrentsize/results[iter]['torrents'][t]['size'] < 1.005:
                                                         possible_find = True
                                                         torrentid = results[iter]['torrents'][t]['torrentId']
                                                         break
